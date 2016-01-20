@@ -31,9 +31,9 @@ function DataSetTest.BucketTest()
   assert(dataset.starts_:size(1) == config.kSampleSize)
   assert(dataset.tokens_:size(1) == torch.sum(dataset.lengths_))
 
-  assert(dataset.lengths_[1] == 13)  -- 2
-  assert(dataset.lengths_[2] == 11)  -- 1
-  assert(dataset.lengths_[3] == 12)  -- 1
+  assert(dataset.lengths_[1] == 13)  -- 3
+  assert(dataset.lengths_[2] == 11)  -- 2
+  assert(dataset.lengths_[3] == 12)  -- 2
   assert(dataset.lengths_[4] == 35)  -- 3
   assert(dataset.lengths_[5] == 25)  -- 3
   assert(dataset.lengths_[6] == 7)   -- 1
@@ -52,7 +52,7 @@ function DataSetTest.BucketTest()
   assert(dataset.limits_[2] == 12)
   assert(dataset.limits_[3] == 35)
 
-  assert(dataset.buckets_[22][1] == 1)
+  assert(dataset.buckets_[23][1] == 1)
   local past_current = {}
   for s = 1, 100 do
     local batch, label = dataset:SampleBatch()

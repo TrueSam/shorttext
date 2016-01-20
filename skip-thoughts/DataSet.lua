@@ -110,14 +110,15 @@ function DataSet:_GetStarts()
   local starts = torch.IntTensor(self.config_.kBatchSize)
   local i = 1
   while i <= self.config_.kBatchSize do
-    if self.indices_[bucket_index] > #current_bucket then
-      self.indices_[bucket_index] = 1
+    if self.indices_[self.current_] > #current_bucket then
+      self.indices_[self.current_] = 1
     end
-    local start = current_bucket[self.indices_[bucket_index]]
+    local start = current_bucket[self.indices_[self.current_]]
     if start + 2 <= self.lengths_:size(1) then
       starts[i] = start
       i = i + 1
     end
+    self.indices_[self.current_] = self.indices_[self.current_] + 1
   end
   self.current_ = self.current_ + 1
   return starts
