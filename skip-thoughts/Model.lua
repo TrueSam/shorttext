@@ -28,8 +28,8 @@ function Model:__init(config, word_vocab)
   self:_LoadPretrainedEmbeddings(filename, word_vocab, e0)
 
   -- share weights
-  e1:share(e0, "weight")
-  e2:share(e0, "weight")
+  e1:share(e0, "weight", "gradWeight")
+  e2:share(e0, "weight", "gradWeight")
 
   self.encoder_ = Encoder.create(config, e1)
   seq:add(Encoder.createSequence(config, e0)):add(self.encoder_):add(Encoder.createSequence(config, e2))

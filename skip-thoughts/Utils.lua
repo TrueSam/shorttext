@@ -115,6 +115,118 @@ function Utils.CountTokensAndLines(config, in_file)
   return num_tokens, num_lines
 end
 
+function Utils.GetBucketIndex(limits, n)
+  for k = 1, #limits do
+    if n <= limits[k] then
+      return k
+    end
+  end
+end
+
+function Utils.BuildBuckets(lengths, num_buckets)
+  assert(num_buckets > 0)
+  local sorted = torch.sort(lengths, 1)
+  local u = 0
+  local unique = {}
+  local unique_count = {}
+  for i = 1, sorted:size(1) do
+    if i - 1 >= 1 then
+      if sorted[i] ~= sorted[i - 1] then
+        table.insert(unique, sorted[i])
+        table.insert(unique_count, 1)
+      else
+        unique_count[#unique_count] = unique_count[#unique_count] + 1
+      end
+    else
+      table.insert(unique, sorted[i])
+      table.insert(unique_count, 1)
+    end
+  end
+  local len = math.floor(lengths:size(1) / num_buckets)
+  local buckets = {}
+  local u = 0
+  for i = 1, #unique_count do
+    if #buckets >= num_buckets - 1 then
+      break
+    end
+    if u + unique_count[i] >= len then
+      table.insert(buckets, unique[i])
+      u = 0
+    else
+      u = u + unique_count[i]
+    end
+  end
+  table.insert(buckets, unique[#unique])
+  assert(#buckets == num_buckets)
+  for i = 1, #buckets - 1 do
+    assert(buckets[i] < buckets[i + 1])
+  end
+  return buckets
+end
+
+function Utils.AssembleIndex(buckets, index)
+  assert(#buckets == #index)
+  local n = 0
+  for i = 1, #index do
+    assert(index[i] > 0 and index[i] <= #buckets)
+    n = n * #buckets + index[i] - 1
+  end
+  return n + 1
+end
+
+function Utils.DisassembleIndex(buckets, index)
+  local retv = {}
+  index = index - 1
+  for i = 1, #buckets do
+    local n = index % #buckets
+    retv[#buckets - i + 1] = n
+    index = math.floor(index / #buckets)
+  end
+  assert(index == 0)
+  for i = 1, #retv do
+    assert(retv[i] >= 0 and retv[i] < #buckets)
+    retv[i] = retv[i] + 1
+  end
+  return retv
+end
+
+function Utils.RandomPermute(array)
+  local index = torch.randperm(#array)
+  local p = {}
+  for i = 1, index:size(1) do
+    table.insert(p, array[index[i]])
+  end
+  return p
+end
+
+function Utils.DistributeBuckets(lengths, limits)
+  local index = {}
+  for i = 1, #limits do
+    for j = 1, #limits do
+      for k = 1, #limits do
+        table.insert(index, {})
+      end
+    end
+  end
+  local buckets = {#limits, #limits, #limits}
+  for i = 1, lengths:size(1) - 2 do
+    local p = Utils.GetBucketIndex(limits, lengths[i])
+    local c = Utils.GetBucketIndex(limits, lengths[i + 1])
+    local n = Utils.GetBucketIndex(limits, lengths[i + 2])
+    local idx = {p, c, n}
+    local b = Utils.AssembleIndex(buckets, idx)
+    local t = index[b]
+    assert(t ~= nil)
+    table.insert(t, i)
+  end
+  for i = 1, #index do
+    if #index[i] > 0 then
+      index[i] = Utils.RandomPermute(index[i])
+    end
+  end
+  return index
+end
+
 
 -- End Utility fucntions
 

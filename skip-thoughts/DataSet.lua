@@ -41,7 +41,16 @@ function DataSet:__init(config, sentence_file, word_vocab)
   end
   assert(num_lines + 1 == sentence)
   assert(num_tokens + 1 == token)
-  self.indices_ = torch.randperm(num_lines)
+  self.limits_ = Utils.BuildBuckets(self.lengths_, config.kNumBucket)
+  self.buckets_ = Utils.DistributeBuckets(self.lengths_, self.limits_)
+  local non_empty_buckets = {}
+  for i = 1, #self.buckets_ do
+    if #self.buckets_[i] > 0 then
+      table.insert(non_empty_buckets, i)
+    end
+  end
+  self.bucket_index_ = Utils.RandomPermute(non_empty_buckets)
+  self.indices_ = torch.IntTensor(#self.bucket_index_):fill(1)
   self.current_ = 1
   self.config_ = config
   if config.useGPU == true then
@@ -49,122 +58,106 @@ function DataSet:__init(config, sentence_file, word_vocab)
   end
 end
 
-function DataSet:SampleBatch()
-  assert(self.config_.kBatchSize > 0)
-  if self.config_.kSentenceSize <= 0 then
-    assert(self.config_.kBatchSize == 1)
-  end
-  local batch = {}
+function DataSet:_GetBatchLabel(batch_size, starts, max_length)
   local label = {}
+  assert(batch_size == starts:size(1))
+  for k = 1, max_length do
+    local pl = torch.IntTensor(batch_size):fill(VocabularyUtils.kEndSentenceWordId)
+
+    for i = 1, batch_size do
+      local p = starts[i]
+      assert(self.lengths_[p] > 0)
+      assert(self.starts_[p] >= 1 and self.starts_[p] + self.lengths_[p] - 1 <= self.tokens_:size(1))
+      local t
+      t = self.starts_[p] + k - 1
+      if k <= self.lengths_[p] then
+        pl[i] = self.tokens_[t]
+      end
+    end
+    table.insert(label, pl)
+  end
+  return label
+end
+
+function DataSet:_GetBatchSentence(batch_size, starts, max_length)
+  local sentence = {}
+  assert(batch_size == starts:size(1))
+  for k = 1, max_length do
+    local pt = torch.IntTensor(batch_size):fill(VocabularyUtils.kEndSentenceWordId)
+
+    for i = 1, batch_size do
+      local p = starts[i]
+      assert(self.lengths_[p] > 0)
+      assert(self.starts_[p] >= 1 and self.starts_[p] + self.lengths_[p] - 1 <= self.tokens_:size(1))
+      local t
+      t = self.starts_[p] + k - 1
+      if k <= self.lengths_[p] then
+        pt[i] = self.tokens_[t]
+      end
+    end
+    table.insert(sentence, pt)
+  end
+  return sentence
+end
+
+function DataSet:_GetStarts()
+  if self.current_ > #self.bucket_index_ then
+    self.current_ = 1
+  end
+  local bucket_index = self.bucket_index_[self.current_]
+  local current_bucket = self.buckets_[bucket_index]
+  assert(#current_bucket > 0)
   local starts = torch.IntTensor(self.config_.kBatchSize)
   local i = 1
   while i <= self.config_.kBatchSize do
-    if self.current_ + self.config_.kBatchSize > self.indices_:size(1) then
-      self.current_ = 1
+    if self.indices_[bucket_index] > #current_bucket then
+      self.indices_[bucket_index] = 1
     end
-    local start = self.indices_[self.current_]
-    if start + 2 <= self.indices_:size(1) then
+    local start = current_bucket[self.indices_[bucket_index]]
+    if start + 2 <= self.lengths_:size(1) then
       starts[i] = start
       i = i + 1
     end
   end
-  local prev = {}
-  local curr = {}
-  local next = {}
-  local prev_label = {}
-  local next_label = {}
-  if self.config_.kBatchSize > 1 then
-    assert(self.config_.kSentenceSize > 0)
-    for k = 1, self.config_.kSentenceSize do
-      local pt = torch.IntTensor(self.config_.kBatchSize):fill(VocabularyUtils.kEndSentenceWordId)
-      local ct = torch.IntTensor(self.config_.kBatchSize):fill(VocabularyUtils.kEndSentenceWordId)
-      local nt = torch.IntTensor(self.config_.kBatchSize):fill(VocabularyUtils.kEndSentenceWordId)
+  self.current_ = self.current_ + 1
+  return starts
+end
 
-      local pl = torch.IntTensor(self.config_.kBatchSize):fill(VocabularyUtils.kEndSentenceWordId)
-      local nl = torch.IntTensor(self.config_.kBatchSize):fill(VocabularyUtils.kEndSentenceWordId)
-
-      for i = 1, self.config_.kBatchSize do
-        local p = starts[i]
-        local c = starts[i] + 1
-        local n = starts[i] + 2
-        assert(self.lengths_[p] > 0)
-        assert(self.lengths_[c] > 0)
-        assert(self.lengths_[n] > 0)
-        assert(self.starts_[p] >= 1 and self.starts_[p] + self.lengths_[p] - 1 <= self.tokens_:size(1))
-        assert(self.starts_[c] >= 1 and self.starts_[c] + self.lengths_[c] - 1 <= self.tokens_:size(1))
-        assert(self.starts_[n] >= 1 and self.starts_[n] + self.lengths_[n] - 1 <= self.tokens_:size(1))
-        local t
-        t = self.starts_[p] + k - 1
-        if k <= self.lengths_[p] then
-          pt[i] = self.tokens_[t]
-          pl[i] = self.tokens_[t]
-        end
-        t = self.starts_[c] + k - 1
-        if k <= self.lengths_[c] then
-          ct[i] = self.tokens_[t]
-        end
-        t = self.starts_[n] + k - 1
-        if k <= self.lengths_[n] then
-          nt[i] = self.tokens_[n]
-          nl[i] = self.tokens_[n]
-        end
-      end
-      table.insert(prev, pt)
-      table.insert(curr, ct)
-      table.insert(next, nt)
-
-      table.insert(prev_label, pl)
-      table.insert(next_label, nl)
-    end
-    table.insert(batch, prev)
-    table.insert(batch, curr)
-    table.insert(batch, next)
-
-    table.insert(label, prev_label)
-    table.insert(label, next_label)
-  else
-    for i = 1, self.config_.kBatchSize do
-      local p = starts[i]
-      local c = starts[i] + 1
-      local n = starts[i] + 2
-        assert(self.lengths_[p] > 0)
-        assert(self.lengths_[c] > 0)
-        assert(self.lengths_[n] > 0)
-        assert(self.starts_[p] >= 1 and self.starts_[p] + self.lengths_[p] - 1 <= self.tokens_:size(1))
-        assert(self.starts_[c] >= 1 and self.starts_[c] + self.lengths_[c] - 1 <= self.tokens_:size(1))
-        assert(self.starts_[n] >= 1 and self.starts_[n] + self.lengths_[n] - 1 <= self.tokens_:size(1))
-
-        local prev = {}
-        local curr = {}
-        local next = {}
-
-        local prev_label = {}
-        local next_label = {}
-        for i = 1, self.lengths_[p] do
-          local t = torch.IntTensor(1)
-          t[1] = self.tokens_[self.starts_[p] + i - 1]
-          table.insert(prev, t)
-          table.insert(prev_label, t:clone())
-        end
-        for i = 1, self.lengths_[c] do
-          local t = torch.IntTensor(1)
-          t[1] = self.tokens_[self.starts_[c] + i - 1]
-          table.insert(curr, t)
-        end
-        for i = 1, self.lengths_[n] do
-          local t = torch.IntTensor(1)
-          t[1] = self.tokens_[self.starts_[n] + i - 1]
-          table.insert(next, t)
-          table.insert(next_label, t:clone())
-        end
-        table.insert(batch, prev)
-        table.insert(batch, curr)
-        table.insert(batch, next)
-
-        table.insert(label, prev_label)
-        table.insert(label, next_label)
-    end
+function DataSet:_GetMaxLength(starts)
+  local max_size = 0
+  for i = 1, starts:size(1) do
+    local s = starts[i]
+    local p = self.lengths_[s]
+    max_size = math.max(p, max_size)
   end
+  return max_size
+end
+
+function DataSet:SampleBatch()
+  assert(self.config_.kBatchSize > 0)
+  local batch = {}
+  local label = {}
+  local starts = self:_GetStarts()
+  local max_prev_size = self:_GetMaxLength(starts)
+  local max_curr_size = self:_GetMaxLength(starts + 1)
+  local max_next_size = self:_GetMaxLength(starts + 2)
+  assert(max_prev_size > 0)
+  assert(max_curr_size > 0)
+  assert(max_next_size > 0)
+  assert(self.config_.kBatchSize > 0)
+  local prev = self:_GetBatchSentence(self.config_.kBatchSize, starts, max_prev_size)
+  local curr = self:_GetBatchSentence(self.config_.kBatchSize, starts + 1, max_curr_size)
+  local next = self:_GetBatchSentence(self.config_.kBatchSize, starts + 2, max_next_size)
+  local prev_label = self:_GetBatchLabel(self.config_.kBatchSize, starts, max_prev_size)
+  local next_label = self:_GetBatchLabel(self.config_.kBatchSize, starts + 2, max_next_size)
+
+  table.insert(batch, prev)
+  table.insert(batch, curr)
+  table.insert(batch, next)
+
+  table.insert(label, prev_label)
+  table.insert(label, next_label)
+
   if self.config_.useGPU == true then
     for i = 1, #batch do
       assert(#batch[i] > 0)
@@ -183,6 +176,6 @@ function DataSet:SampleBatch()
 end
 
 function DataSet:size()
-  return self.indices_:size(1)
+  return self.lengths_:size(1)
 end
 
