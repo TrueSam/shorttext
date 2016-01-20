@@ -15,13 +15,15 @@ function VectorDataSet:__init(size, dim)
   self.original_texts_ = {}
 end
 
-function VectorDataSet:precision(distance_type)
+function VectorDataSet:precision(distance_type, show_examples)
   local size = self.labels_:size(1)
-  assert(#self.texts_ == #self.original_texts_)
-  assert(#self.texts_ == size)
-  for i = 1, size do
-    assert(self.labels_[i] == 1 or self.labels_[i] == -1)
-    assert(self.texts_[i] ~= nil)
+  if show_examples == true then
+    assert(#self.texts_ == #self.original_texts_)
+    assert(#self.texts_ == size)
+    for i = 1, size do
+      assert(self.labels_[i] == 1 or self.labels_[i] == -1)
+      assert(self.texts_[i] ~= nil)
+    end
   end
   local correct = 0.0
   local positive = {}
@@ -37,11 +39,14 @@ function VectorDataSet:precision(distance_type)
       table.insert(negative, i)
     end
   end
-  print('Correct:')
-  self:ShowExamples(positive)
-  print('Wrong:')
-  self:ShowExamples(negative)
+  if show_examples == true then
+    print('Correct:')
+    self:ShowExamples(positive)
+    print('Wrong:')
+    self:ShowExamples(negative)
+  end
   return correct / size
+
 end
 
 function VectorDataSet:ShowExamples(examples)

@@ -4,6 +4,7 @@ require('torch')
 local ConditionTable = torch.class('ConditionTable', 'nn.Module')
 
 function ConditionTable:__init(config)
+  nn.Module.__init(self)
   self.config_ = config
   if config.useGPU == true  then
     require('cutorch')

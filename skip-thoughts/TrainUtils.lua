@@ -20,5 +20,5 @@ function TrainUtils.PolarityValidation(model, rt_dataset, distance_type)
     dev_dataset.original_texts_[j] = original
   end
   model.model_:training()
-  return 1 - dev_dataset:precision(distance_type)
+  return 1 - dev_dataset:precision(distance_type, true)
 end

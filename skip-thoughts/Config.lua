@@ -21,7 +21,7 @@ function Config:__init()
   self.kRTSampleSize = 500
 
   self.kWordDim = 50
-  self.kHiddenDim = 200
+  self.kHiddenDim = 50
 
   self.kPretrainedFile = "vectors-1billion-50.t7"
   -- self.kPretrainedFile = "glove.6B.50d.t7"

@@ -23,7 +23,7 @@ function VectorDataSetTest.Test()
   local m = table:argmin(1, VectorDataSet.EUCLIDEAN)
   assert(m == 2)
 
-  m = table:precision(VectorDataSet.EUCLIDEAN)
+  m = table:precision(VectorDataSet.EUCLIDEAN, false)
   assert(math.abs(m - 2.0 / 3) <= 1E4)
 
   table.vectors_[1]:copy(torch.Tensor{1, 1});

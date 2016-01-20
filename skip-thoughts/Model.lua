@@ -41,8 +41,8 @@ function Model:__init(config, word_vocab)
   self.model_:add(concat)
 
   local concat = nn.ConcatTable()
-  local t1 = nn.Sequential():add(nn.NarrowTable(1, 2)):add(Decoder.create(config, word_vocab))
-  local t2 = nn.Sequential():add(nn.NarrowTable(3, 2)):add(Decoder.create(config, word_vocab))
+  local t1 = nn.Sequential():add(nn.NarrowTable(1, 2)):add(Decoder.create(config, word_vocab, e0))
+  local t2 = nn.Sequential():add(nn.NarrowTable(3, 2)):add(Decoder.create(config, word_vocab, e0))
   concat:add(t1):add(t2)
   self.model_:add(concat)
 
