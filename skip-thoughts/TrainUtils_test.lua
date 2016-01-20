@@ -21,7 +21,7 @@ function TrainUtilsTest.Test()
   local vocab = vocab_builder:BuildWordVocabulary(word_vocab_file)
   local model = Model(config, vocab)
   local dataset= PolarityDataSet(config, vocab)
-  local error_rate = TrainUtils.PolarityValidation(model, dataset)
+  local error_rate = TrainUtils.PolarityValidation(model, dataset, VectorDataSet.COSINE)
   assert(error_rate ~= nil)
   assert(error_rate >= 0 and error_rate <= 1.0)
 end

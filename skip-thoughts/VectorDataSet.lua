@@ -50,6 +50,7 @@ function VectorDataSet:precision(distance_type, show_examples)
 end
 
 function VectorDataSet:ShowExamples(examples)
+  local size = self.labels_:size(1)
   local index = torch.randperm(#examples)
   n = math.min(3, #examples)
   for i = 1, n do
