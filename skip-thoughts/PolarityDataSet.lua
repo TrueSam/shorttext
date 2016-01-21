@@ -1,4 +1,5 @@
 require("torch")
+require("paths")
 require("Config")
 require("Vocabulary")
 require("Utils")
@@ -6,8 +7,8 @@ require("Utils")
 local PolarityDataSet = torch.class("PolarityDataSet")
 
 function PolarityDataSet:__init(config, word_vocab)
-  local positive_file = 'data/rt.pos.wrd'
-  local negative_file = 'data/rt.neg.wrd'
+  local positive_file = paths.concat(config.kDataPath, "rt.pos.wrd")
+  local negative_file = paths.concat(config.kDataPath, "rt.neg.wrd")
   local positive_lines = Utils.ReadLines(positive_file)
   local negative_lines = Utils.ReadLines(negative_file)
   assert(positive_lines)

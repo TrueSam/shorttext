@@ -6,10 +6,11 @@ local Config = torch.class("Config")
 
 function Config:__init()
   -- The mini frequency for the text to keep in vocabulary
-  self.kMinWordFreq = 5
+  self.kMinWordFreq = 100
 
   -- The size for the minibatch of sentences.
-  self.kBatchSize = 10  -- Set batch size to bigger number if not using GPU.
+  -- Set batch size to bigger number if not using GPU.
+  self.kBatchSize = 5
   self.kSentenceSize = -1
   self.kMaxSentenceSize = 100
   self.kNumBucket = 20

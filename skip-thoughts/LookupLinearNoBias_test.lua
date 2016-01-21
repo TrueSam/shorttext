@@ -30,6 +30,10 @@ function LookupLinearNoBiasTest.BatchTest()
 
   assert(output[2][1] == 20)
   assert(output[2][2] == 47)
+
+  local grad = torch.Tensor{{0.1, 0.2}, {0.2, 0.3}}
+  local output = table:backward(batch, grad)
+  print(output)
 end
 
 mytester:add(LookupLinearNoBiasTest)

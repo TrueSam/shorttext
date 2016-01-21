@@ -12,6 +12,8 @@ require("DataSet")
 require("Model")
 require("PolarityDataSet")
 require("TrainUtils")
+require("BatchSampler")
+require("BucketBatchSampler")
 require("Utils")
 require("VectorDataSet")
 require("VocabularyBuilder")
@@ -40,6 +42,9 @@ print('Loaded ' .. word_vocab:size() .. ' tokens')
 
 print('Load books dataset.')
 local train_dataset = DataSet(config, word_file, word_vocab)
+print('Create sampler from dataset.')
+-- local sampler = BatchSampler(config, train_dataset.tokens_, train_dataset.starts_, train_dataset.lengths_);
+local sampler = BucketBatchSampler(config, train_dataset.tokens_, train_dataset.starts_, train_dataset.lengths_);
 
 print('Load rt polarity dataset.')
 local rt_dataset = PolarityDataSet(config, word_vocab)
@@ -62,7 +67,9 @@ for e = 1, E do
   -- validation after very M samples
   local M = 2000
   for i = 1, size do
-    local sentences, targets = train_dataset:SampleBatch()
+    local sentences, targets = sampler:SampleBatch()
+    assert(sentences ~= nil)
+    assert(targets ~= nil)
     local loss = model:train(sentences, targets)
     assert(loss ~= nil)
 
@@ -73,7 +80,7 @@ for e = 1, E do
       logger:info(string.format("Error rate for tag prediction on dev set using euclidean: %f", error_rate))
     end
 
-    if i % 100 == 0 then
+    if i % 10 == 0 then
       logger:info("Epoch " .. e .. " trained " .. i .. " examples, " .. 'current loss: ' .. loss)
       collectgarbage()
     end

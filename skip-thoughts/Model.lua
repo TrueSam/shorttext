@@ -78,9 +78,14 @@ function Model:train(sentence_triple, label_pair)
     collectgarbage()
   end
 
+  collectgarbage()
+
   local output = self.model_:forward(sentence_triple)
   local loss = self.criterion_:forward(output, label_pair)
   local grad = self.criterion_:backward(output, label_pair)
+  assert(grad ~= nil)
+  assert(loss ~= nil)
+  assert(output ~= nil)
   self.model_:zeroGradParameters()
   self.model_:backward(sentence_triple, grad)
   self.model_:updateParameters(self.config_.kLearningRate)

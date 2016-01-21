@@ -157,7 +157,7 @@ function Utils.BuildBuckets(lengths, num_buckets)
     end
   end
   table.insert(buckets, unique[#unique])
-  assert(#buckets == num_buckets)
+  assert(#buckets <= num_buckets)
   for i = 1, #buckets - 1 do
     assert(buckets[i] < buckets[i + 1])
   end
@@ -168,8 +168,8 @@ function Utils.AssembleIndex(buckets, index)
   assert(#buckets == #index)
   local n = 0
   for i = 1, #index do
-    assert(index[i] > 0 and index[i] <= #buckets)
-    n = n * #buckets + index[i] - 1
+    assert(index[i] > 0 and index[i] <= buckets[i])
+    n = n * buckets[i] + index[i] - 1
   end
   return n + 1
 end
@@ -177,14 +177,14 @@ end
 function Utils.DisassembleIndex(buckets, index)
   local retv = {}
   index = index - 1
-  for i = 1, #buckets do
-    local n = index % #buckets
-    retv[#buckets - i + 1] = n
-    index = math.floor(index / #buckets)
+  for i = #buckets, 1, -1 do
+    local n = index % buckets[i]
+    retv[i] = n
+    index = math.floor(index / buckets[i])
   end
   assert(index == 0)
   for i = 1, #retv do
-    assert(retv[i] >= 0 and retv[i] < #buckets)
+    assert(retv[i] >= 0 and retv[i] < buckets[i])
     retv[i] = retv[i] + 1
   end
   return retv
@@ -194,7 +194,42 @@ function Utils.RandomPermute(array)
   local index = torch.randperm(#array)
   local p = {}
   for i = 1, index:size(1) do
-    table.insert(p, array[index[i]])
+    local v = array[index[i]]
+    assert(v ~= nil)
+    table.insert(p, v)
+  end
+  return p
+end
+
+function Utils.MergeBuckets(buckets, min_size)
+  local small_buckets = {}
+  local large_buckets = {}
+  for i = 1, #buckets do
+    if #buckets[i] > 0 then
+      if #buckets[i] < min_size then
+        table.insert(small_buckets, i)
+      else
+        table.insert(large_buckets, i)
+      end
+    end
+  end
+  local function merge(from, to)
+    assert(#from > 0)
+    assert(#to > 0)
+    for i = 1, #from do
+      table.insert(to, from[i])
+    end
+    from = {}
+  end
+  for i = 2, #small_buckets do
+    merge(buckets[small_buckets[i]], buckets[small_buckets[1]])
+  end
+  table.insert(large_buckets, small_buckets[1])
+
+  local p = {}
+  for i = 1, #large_buckets do
+    assert(#buckets[large_buckets[i]] > 0)
+    table.insert(p, torch.IntTensor(buckets[large_buckets[i]]))
   end
   return p
 end
@@ -213,6 +248,9 @@ function Utils.DistributeBuckets(lengths, limits)
     local p = Utils.GetBucketIndex(limits, lengths[i])
     local c = Utils.GetBucketIndex(limits, lengths[i + 1])
     local n = Utils.GetBucketIndex(limits, lengths[i + 2])
+    assert(p >= 1 and p <= #limits)
+    assert(c >= 1 and c <= #limits)
+    assert(n >= 1 and n <= #limits)
     local idx = {p, c, n}
     local b = Utils.AssembleIndex(buckets, idx)
     local t = index[b]
