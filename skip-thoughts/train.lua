@@ -44,7 +44,6 @@ print('Load books dataset.')
 local train_dataset = DataSet(config, word_file, word_vocab)
 print('Create sampler from dataset.')
 local sampler = BatchSampler(config, train_dataset.tokens_, train_dataset.starts_, train_dataset.lengths_);
--- local sampler = BucketBatchSampler(config, train_dataset.tokens_, train_dataset.starts_, train_dataset.lengths_);
 
 print('Load rt polarity dataset.')
 local rt_dataset = PolarityDataSet(config, word_vocab)
