@@ -70,7 +70,7 @@ for e = 1, E do
   assert(size > 0)
 
   -- validation after very M samples
-  local M = 20
+  local M = 2000
   for i = 1, size do
     local sentences, targets = sampler:SampleBatch()
     assert(sentences ~= nil)
