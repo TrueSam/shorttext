@@ -64,7 +64,9 @@ function Utils.ReadLines(in_file)
   assert(type(in_file) == "string")
   local lines = {}
   for line in io.lines(in_file) do
-    table.insert(lines, line)
+    if line:len() > 0 then
+      table.insert(lines, line)
+    end
   end
   return lines
 end

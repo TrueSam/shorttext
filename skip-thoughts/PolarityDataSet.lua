@@ -2,19 +2,22 @@ require("torch")
 require("paths")
 require("Config")
 require("Vocabulary")
+require("ValidationDataSet")
 require("Utils")
 
-local PolarityDataSet = torch.class("PolarityDataSet")
+local PolarityDataSet, parent = torch.class("PolarityDataSet", 'ValidationDataSet')
 
 function PolarityDataSet:__init(config, word_vocab)
+  parent.__init(self)
+
   local positive_file = paths.concat(config.kDataPath, "rt.pos.wrd")
   local negative_file = paths.concat(config.kDataPath, "rt.neg.wrd")
   local positive_lines = Utils.ReadLines(positive_file)
   local negative_lines = Utils.ReadLines(negative_file)
   assert(positive_lines)
   assert(negative_lines)
-  local positive_sample_lines = self:_subrange(positive_lines, 1, config.kRTSampleSize)
-  local negative_sample_lines = self:_subrange(negative_lines, 1, config.kRTSampleSize)
+  local positive_sample_lines = self:_Subrange(positive_lines, 1, config.kRTSampleSize)
+  local negative_sample_lines = self:_Subrange(negative_lines, 1, config.kRTSampleSize)
   local num_positive_tokens = Utils.CountTokens(positive_sample_lines)
   local num_negative_tokens = Utils.CountTokens(negative_sample_lines)
   local num_tokens = num_positive_tokens + num_negative_tokens
@@ -25,6 +28,7 @@ function PolarityDataSet:__init(config, word_vocab)
   self.starts_ = torch.IntTensor(num_lines)
   self.lengths_ = torch.IntTensor(num_lines)
   self.labels_ = torch.IntTensor(num_lines)
+  self.texts_ = {}
   self.sentences_ = {}
 
   local token = 1
@@ -47,10 +51,19 @@ function PolarityDataSet:__init(config, word_vocab)
       self.lengths_[sentence] = #parts
       self.starts_[sentence] = token
       self.labels_[sentence] = label
+
+      local s = {}
       for i = 1, #parts do
-        self.tokens_[token] = word_vocab:word_id(parts[i])
+        local id = word_vocab:word_id(parts[i])
+        local text = word_vocab:word_text(id)
+        self.tokens_[token] = id
+        table.insert(s, text)
         token = token + 1
       end
+
+      self.texts_[sentence] = table.concat(s, " ")
+      self.sentences_[sentence] = line
+
       sentence = sentence + 1
     end
   end
@@ -68,32 +81,44 @@ function PolarityDataSet:__init(config, word_vocab)
   end
 end
 
-function PolarityDataSet:_token_text(tokens)
-  local s = {}
-  for i = 1, tokens:size(1) do
-    local t = tokens[i]
-    table.insert(s, self.word_vocab_:word_text(t))
+function PolarityDataSet:Examples(nearest)
+  local e = {}
+  local p = 0
+  local n = 0
+  local size = self.lengths_:size(1)
+  for i = 1, size do
+    if self.labels_[i] == self.labels_[nearest[i]] then
+      if p < 3 then
+        table.insert(e, {1, i, nearest[i]})
+      end
+      p = p + 1
+    else
+      if n < 3 then
+        table.insert(e, {-1, i, nearest[i]})
+      end
+      n = n + 1
+    end
   end
-  return table.concat(s, " ")
+  return e
 end
 
-function PolarityDataSet:GetSentence(p)
-  assert(p >= 1 and p <= self.size_)
-  local tokens = self.tokens_:narrow(1, self.starts_[p], self.lengths_[p])
-  local text = self:_token_text(tokens)
-  if self.config_.useGPU == true then
-    tokens = tokens:cuda()
+function PolarityDataSet:Precision(nearest)
+  assert(nearest:size(1) == self.lengths_:size(1))
+  local correct = 0
+  local size = nearest:size(1)
+  for i = 1, size do
+    if self.labels_[i] == self.labels_[nearest[i]] then
+      correct = correct + 1
+    end
   end
-  local label = self.labels_[p]
-  local original_text = self.sentences_[p]
-  return tokens, label, text, original_text
+  return correct / size
 end
 
-function PolarityDataSet:size()
-  return self.size_
+function PolarityDataSet:Show(examples)
+  ValidationDataSet.Show(examples, self.lengths_:size(1), self.texts_, self.sentences_)
 end
 
-function PolarityDataSet:_subrange(t, s, l)
+function PolarityDataSet:_Subrange(t, s, l)
   assert(type(t) == 'table')
   local r = {}
   for i = 0, l - 1 do

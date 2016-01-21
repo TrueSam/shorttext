@@ -10,13 +10,13 @@ function Config:__init()
 
   -- The size for the minibatch of sentences.
   -- Set batch size to bigger number if not using GPU.
-  self.kBatchSize = 5
+  self.kBatchSize = 20
   self.kSentenceSize = -1
   self.kMaxSentenceSize = 100
   self.kNumBucket = 20
 
   -- The sample size for the dataset, -1 means using all the data.
-  self.kSampleSize = 100000
+  self.kSampleSize = 1000000
 
   -- for validation
   self.kRTSampleSize = 500
