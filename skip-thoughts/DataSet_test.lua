@@ -7,6 +7,7 @@ require("os")
 require("DataSet")
 require("Config")
 require("VocabularyBuilder")
+require("BatchSampler")
 require("VocabularyUtils")
 
 mytester = torch.Tester()
@@ -46,26 +47,6 @@ function DataSetTest.BucketTest()
   assert(dataset.starts_[5] == 72)
   assert(dataset.starts_[6] == 97)
   assert(dataset.starts_[7] == 104)
-
-  assert(#dataset.limits_ == config.kNumBucket)
-  assert(dataset.limits_[1] == 7)
-  assert(dataset.limits_[2] == 12)
-  assert(dataset.limits_[3] == 35)
-
-  assert(dataset.buckets_[23][1] == 1)
-  local past_current = {}
-  for s = 1, 100 do
-    local batch, label = dataset:SampleBatch()
-    table.insert(past_current, dataset.current_)
-  end
-
-  local identical = true
-  for i = 1, #past_current - 1 do
-    if past_current[i] ~= past_current[i + 1] then
-      identical = false
-    end
-  end
-  assert(identical == false)
 end
 
 function DataSetTest.BatchTest()
@@ -82,7 +63,6 @@ function DataSetTest.BatchTest()
   local word_file = paths.concat(config.kDataPath, "books.wrd")
   local dataset = DataSet(config, word_file, word_vocab)
   assert(dataset.lengths_:size(1) == config.kSampleSize)
-  table.sort(dataset.buckets_[1])
   assert(dataset.lengths_:size(1) == config.kSampleSize)
   assert(dataset.starts_:size(1) == config.kSampleSize)
   assert(dataset.tokens_:size(1) == torch.sum(dataset.lengths_))
@@ -103,11 +83,14 @@ function DataSetTest.BatchTest()
   assert(dataset.starts_[6] == 97)
   assert(dataset.starts_[7] == 104)
 
-
+  local sampler = BatchSampler(config, dataset.tokens_, dataset.starts_, dataset.lengths_);
 
   for s = 1, 100 do
-    local start = dataset.indices_[1]
-    local batch, label = dataset:SampleBatch()
+    local start = nil
+    if sampler.current_ <= sampler.indices_:size(1) then
+      start = sampler.indices_[sampler.current_]
+    end
+    local batch, label = sampler:SampleBatch()
     assert(#batch == 3)  -- prev, curr, next
     for k = 1, #batch do
       for i = 1, #batch[k] do
@@ -193,7 +176,6 @@ function DataSetTest.Test()
   local word_file = paths.concat(config.kDataPath, "books.wrd")
   local dataset = DataSet(config, word_file, word_vocab)
   assert(dataset.lengths_:size(1) == config.kSampleSize)
-  table.sort(dataset.buckets_[1])
   assert(dataset.tokens_:size(1) == torch.sum(dataset.lengths_))
   assert(dataset.starts_:size(1) == config.kSampleSize)
 
@@ -211,9 +193,14 @@ function DataSetTest.Test()
 
   assert(dataset.lengths_:size(1) == config.kSampleSize)
 
+  local sampler = BatchSampler(config, dataset.tokens_, dataset.starts_, dataset.lengths_);
+
   for s = 1, 100 do
-    local start = dataset.indices_[1]
-    local batch = dataset:SampleBatch()
+    local start = nil
+    if sampler.current_ <= sampler.indices_:size(1) then
+      start = sampler.indices_[sampler.current_]
+    end
+    local batch = sampler:SampleBatch()
     assert(#batch == 3)  -- prev, curr, next
     for k = 1, #batch do
       assert(#batch[k], dataset.lengths_[k])

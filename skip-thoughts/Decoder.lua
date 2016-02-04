@@ -21,10 +21,6 @@ function Decoder.create(config, word_vocab, lookup)
   model:add(ConditionTable(config))
   local seq = nn.Sequential()
   seq:add(CGRU(config.kWordDim, config.kHiddenDim, config.kHiddenDim))
-  --[[
-  local w = LookupLinearNoBias(word_vocab:size(), config.kHiddenDim)
-  w:share(lookup, 'weight', 'gradWeight')
-  --]]
   local w = nn.LinearNoBias(config.kHiddenDim, word_vocab:size())
   seq:add(w)
   seq:add(nn.LogSoftMax())

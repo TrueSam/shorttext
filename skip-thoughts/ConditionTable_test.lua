@@ -12,6 +12,7 @@ local ConditionTableTest = {}
 
 function ConditionTableTest.Test()
   local config = Config()
+  config.useGPU = false
   local table = ConditionTable(config)
   local seq = {torch.randn(3), torch.randn(3), torch.randn(3)}
   local cond = torch.randn(3)

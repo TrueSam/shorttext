@@ -3,8 +3,6 @@
 require("torch")
 require("Utils")
 
-local utf8 = require("lua-utf8")
-
 local DataSet = torch.class("DataSet")
 
 -- The class to hold the training, developing, and testing data.

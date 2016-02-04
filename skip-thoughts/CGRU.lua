@@ -67,7 +67,7 @@ function CGRU:buildModel()
    t3:add(nn.SelectTable(3)):add(nn.LinearNoBias(self.outputSize, self.outputSize))
    concat:add(t1):add(t2):add(t3)
    hidden:add(concat):add(nn.CAddTable()):add(nn.Tanh())
-   
+
    local z1 = nn.Sequential()
    z1:add(nn.SelectTable(5))
    z1:add(nn.SAdd(-1, true))  -- Scalar add & negation
@@ -87,7 +87,7 @@ function CGRU:buildModel()
    o2:add(concat):add(nn.CAddTable())
 
    seq:add(o2)
-   
+
    return seq
 end
 
@@ -117,18 +117,18 @@ function CGRU:updateOutput(input)
    else
       output = self.recurrentModule:updateOutput{input, prevOutput}
    end
-   
+
    if self.train ~= false then
-      local input_ = self.inputs[self.step]
-      self.inputs[self.step] = self.copyInputs 
-         and nn.rnn.recursiveCopy(input_, input) 
-         or nn.rnn.recursiveSet(input_, input)     
+     local input_ = self.inputs[self.step]
+     self.inputs[self.step] = self.copyInputs and
+     nn.rnn.recursiveCopy(input_, input) or
+     nn.rnn.recursiveSet(input_, input)
    end
-   
+
    self.outputs[self.step] = output
-   
+
    self.output = output
-   
+
    self.step = self.step + 1
    self.gradPrevOutput = nil
    self.updateGradInputStep = nil

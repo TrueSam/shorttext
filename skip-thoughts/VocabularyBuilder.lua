@@ -6,8 +6,6 @@ require("Utils")
 require("Vocabulary")
 require("VocabularyUtils")
 
-local utf8 = require("lua-utf8")
-
 local VocabularyBuilder = torch.class("VocabularyBuilder")
 
 function VocabularyBuilder:__init(config)

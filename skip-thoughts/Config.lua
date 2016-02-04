@@ -10,7 +10,7 @@ function Config:__init()
 
   -- The size for the minibatch of sentences.
   -- Set batch size to bigger number if not using GPU.
-  self.kBatchSize = 20
+  self.kBatchSize = 30
   self.kSentenceSize = -1
   self.kMaxSentenceSize = 100
   self.kNumBucket = 20
@@ -28,11 +28,11 @@ function Config:__init()
   -- self.kPretrainedFile = "glove.6B.50d.t7"
 
   -- Learning rate
-  self.kLearningRate = 0.005
+  self.kLearningRate = 0.05
   self.kMinLearningRate = 0.001
   self.kLearningRateDecay = 0.0001
 
   self.kDataPath = "data"
 
-  self.useGPU = false
+  self.useGPU = true
 end

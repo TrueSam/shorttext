@@ -1,7 +1,6 @@
 require("torch")
 require("Config")
 require("VocabularyUtils")
-local utf8 = require("lua-utf8")
 
 local Vocabulary = torch.class("Vocabulary")
 

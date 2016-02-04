@@ -1,13 +1,12 @@
 require("torch")
 require("Config")
-local utf8 = require("lua-utf8")
 
 local Utils = torch.class("Utils")
 
 -- Utility functions
 Utils.split = function(text)
   local parts = {}
-  for w in utf8.gmatch(text, "%S+") do
+  for w in string.gmatch(text, "%S+") do
     table.insert(parts, w)
   end
   return parts
@@ -15,8 +14,8 @@ end
 
 Utils.explode = function (text)
   local chars = {}
-  for i = 1, utf8.len(text) do
-    table.insert(chars, utf8.sub(text, i, i))
+  for i = 1, string.len(text) do
+    table.insert(chars, string.sub(text, i, i))
   end
   return chars
 end
@@ -123,15 +122,18 @@ function Utils.GetBucketIndex(limits, n)
       return k
     end
   end
+  error('Number ' .. n .. ' not in the range of ' .. table.concat(limits, ','))
 end
 
 function Utils.BuildBuckets(lengths, num_buckets)
   assert(num_buckets > 0)
+  assert(lengths:size(1) > 0)
   local sorted = torch.sort(lengths, 1)
   local u = 0
   local unique = {}
   local unique_count = {}
   for i = 1, sorted:size(1) do
+    assert(sorted[i] > 0)
     if i - 1 >= 1 then
       if sorted[i] ~= sorted[i - 1] then
         table.insert(unique, sorted[i])
@@ -144,11 +146,23 @@ function Utils.BuildBuckets(lengths, num_buckets)
       table.insert(unique_count, 1)
     end
   end
+  assert(#unique == #unique_count)
   local len = math.floor(lengths:size(1) / num_buckets)
+  if len <= 0 then
+    len = 1
+  end
   local buckets = {}
   local u = 0
+  for i = 1, #unique_count - 1 do
+    assert(unique[i] < unique[i + 1])
+  end
+  local append_last = false
   for i = 1, #unique_count do
+    assert(unique_count[i] > 0)
+    assert(unique[i] > 0)
+    assert(u >= 0)
     if #buckets >= num_buckets - 1 then
+      append_last = true
       break
     end
     if u + unique_count[i] >= len then
@@ -156,12 +170,20 @@ function Utils.BuildBuckets(lengths, num_buckets)
       u = 0
     else
       u = u + unique_count[i]
+      if i == #unique_count then
+        append_last = true
+      end
     end
   end
-  table.insert(buckets, unique[#unique])
+  if append_last == true then
+    table.insert(buckets, unique[#unique])
+  end
   assert(#buckets <= num_buckets)
   for i = 1, #buckets - 1 do
     assert(buckets[i] < buckets[i + 1])
+  end
+  for i = 1, sorted:size(1) do
+    assert(sorted[i] <= buckets[#buckets])
   end
   return buckets
 end

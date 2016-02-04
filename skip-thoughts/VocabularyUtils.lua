@@ -1,8 +1,6 @@
 require("torch")
 require("Utils")
 
-local utf8 = require("lua-utf8")
-
 local VocabularyUtils = torch.class("VocabularyUtils")
 
 local function _SortedKeys(count)
@@ -40,7 +38,7 @@ local function _LoadCounts(in_file, lowercase)
     assert(n ~= nil)
     local s = parts[1]
     if lowercase == true then
-      s = utf8.lower(s)
+      s = string.lower(s)
     end
     count[s] = n
   end

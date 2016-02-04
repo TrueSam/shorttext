@@ -56,11 +56,32 @@ function Model:__init(config, word_vocab)
   self.eventCount = 0
 end
 
+function Model:WriteToFile(filename)
+  if self.config_.useGPU == true then
+    self.model_ = self.model_:float()
+    self.criterion_ = self.criterion_:float()
+  end
+
+  torch.save(filename, self)
+end
+
+function Model:ReadFromFile(filename)
+  self = torch.load(filename)
+  self.eventCount = 0
+  if self.config_.useGPU == true then
+    self.model_ = self.model_:cuda()
+    self.criterion_ = self.criterion_:cuda()
+  end
+end
+
 function Model:train(sentence_triple, label_pair)
   assert(#sentence_triple == 3)
   assert(#label_pair == 2)
   assert(#sentence_triple[1] == #label_pair[1])
   assert(#sentence_triple[3] == #label_pair[2])
+  assert(#sentence_triple[1] > 0)
+  assert(#sentence_triple[2] > 0)
+  assert(#sentence_triple[3] > 0)
   for k = 1, #sentence_triple do
     assert(#sentence_triple[k] > 0)
     for i = 1, #sentence_triple[k] do
@@ -74,10 +95,6 @@ function Model:train(sentence_triple, label_pair)
     end
   end
 
-  if (self.eventCount % 10 == 0) then
-    collectgarbage()
-  end
-
   collectgarbage()
 
   local output = self.model_:forward(sentence_triple)
@@ -86,9 +103,16 @@ function Model:train(sentence_triple, label_pair)
   assert(grad ~= nil)
   assert(loss ~= nil)
   assert(output ~= nil)
+
+  local nevals = self.eventCount
+  local lr = self.config_.kLearningRate
+  local lrd = self.config_.kLearningRateDecay
+  local clr = lr / (1 + nevals * lrd)
+  assert(clr >= 0.0)
+
   self.model_:zeroGradParameters()
   self.model_:backward(sentence_triple, grad)
-  self.model_:updateParameters(self.config_.kLearningRate)
+  self.model_:updateParameters(clr)
   self.eventCount = self.eventCount + 1
   return loss
 end

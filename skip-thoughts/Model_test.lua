@@ -22,8 +22,39 @@ do
   end
 end
 
+local function RandomBatch(vocab_size, batch_size, sentence_size)
+  local sent = {}
+  for i = 1, sentence_size do
+    local s = torch.IntTensor(batch_size)
+    for k = 1, batch_size do
+      s[k] = torch.random(1, vocab_size)
+    end
+    table.insert(sent, s)
+  end
+  return sent
+end
+
+local function RandomTrainExample(vocab_size, batch_size, sentence_size)
+  assert(vocab_size > 0)
+  assert(sentence_size > 0)
+  assert(batch_size > 0)
+  local prev_size = torch.random(1, sentence_size)
+  local curr_size = torch.random(1, sentence_size)
+  local next_size = torch.random(1, sentence_size)
+  local batch = torch.random(1, batch_size)
+  local prev_sent = RandomBatch(vocab_size, batch, prev_size)
+  local curr_sent = RandomBatch(vocab_size, batch, curr_size)
+  local next_sent = RandomBatch(vocab_size, batch, next_size)
+
+  local input = {prev_sent, curr_sent, next_sent}
+  local target = {prev_sent, next_sent}
+
+  return input, target
+end
+
 function ModelTest.Test()
   local config = Config()
+  config.useGPU = false
   local vocab_builder = VocabularyBuilder(config)
   local word_vocab_file = paths.concat(config.kDataPath, "books.wrd.voc")
   local vocab = vocab_builder:BuildWordVocabulary(word_vocab_file)
@@ -45,8 +76,13 @@ function ModelTest.Test()
   assert(dp ~= nil)
   local t = table.model_:backward(input, dp)
 
-  loss = table:train(input, target)
-  assert(loss ~= nil)
+  for i = 1, 100 do
+    print('Running ' .. i .. ' random example')
+    input, target = RandomTrainExample(vocab:size(), 100, 100)
+    loss = table:train(input, target)
+    assert(loss ~= nil)
+    collectgarbage()
+  end
 
   local v = table:vector(torch.IntTensor{1, 2, 3, 4, 5})
   assert(v ~= nil)

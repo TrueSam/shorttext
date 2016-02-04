@@ -26,6 +26,7 @@ function BatchSampler:_GetStarts()
     end
     local start = self.indices_[self.current_]
     starts[i] = start
+    self.current_ = self.current_ + 1
   end
   return starts
 end
