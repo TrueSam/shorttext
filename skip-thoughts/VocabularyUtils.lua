@@ -97,3 +97,24 @@ VocabularyUtils.ReadWordVocabulary = function(filename, min_frequency, lowercase
   scored_count, count_freq = _ScoreCount(unscored_count, scored_count, count_freq, next_id)
   return scored_count, count_freq
 end
+
+function VocabularyUtils.PrintBatchSentences(word_vocab, sentences)
+  assert(#sentences > 0)
+  for j = 1, #sentences do
+    local sentence = sentences[j]
+    for i = 1, #sentence do
+      assert(sentence[i]:size(1) == sentence[1]:size(1))
+    end
+    local batch_size = sentence[1]:size(1)
+    assert(batch_size > 0)
+    for k = 1, batch_size do
+      local s = {}
+      for i = 1, #sentence do
+        table.insert(s, word_vocab:word_text(sentence[i][k]))
+      end
+      print(table.concat(s, ' '))
+    end
+    print('-------------------------------------------------')
+  end
+  print('=================================================')
+end

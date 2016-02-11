@@ -12,6 +12,7 @@ function Model:__init(config, word_vocab)
   if config.useGPU == true then
     require("cutorch")
     require("cunn")
+    require("cudnn")
     require("cunnx")
   end
 

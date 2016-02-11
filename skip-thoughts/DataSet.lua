@@ -25,7 +25,7 @@ function DataSet:__init(config, sentence_file, word_vocab)
     assert(token <= num_tokens)
     local parts = Utils.split(line)
     assert(#parts > 0)
-    if #parts <= config.kMaxSentenceSize then
+    if #parts <= config.kMaxSentenceSize and #parts >= config.kMinSentenceSize then
       local size = Utils.ChunkSentence(parts, config.kSentenceSize)
       self.lengths_[sentence] = size
       self.starts_[sentence] = token
@@ -41,11 +41,15 @@ function DataSet:__init(config, sentence_file, word_vocab)
   assert(num_tokens + 1 == token)
   self.config_ = config
   if config.useGPU == true then
-    require('cutorch')
+    require("cutorch")
+    require("cunn")
+    require("cudnn")
+    require("cunnx")
   end
+
+  self.word_vocab_ = word_vocab
 end
 
 function DataSet:size()
   return self.lengths_:size(1)
 end
-

@@ -26,7 +26,9 @@ function Validator:Cosine(i, j)
 end
 
 function Validator:Euclidean(i, j)
-  local n = self.vectors_[i] - self.vectors_[j]
+  local vi = torch.div(self.vectors_[i], self.vectors_[i]:norm())
+  local vj = torch.div(self.vectors_[j], self.vectors_[j]:norm())
+  local n = vi - vj
   local t = n:norm()
   return t
 end
@@ -38,7 +40,7 @@ function Validator:Argmin(index, distance_type)
   assert(size > 1)
   assert(index >= 1 and index <= size)
   local m = -1
-  local d = 0
+  local d = -1
   for i = 1, size do
     if i ~= index then
       local t
@@ -47,7 +49,9 @@ function Validator:Argmin(index, distance_type)
       elseif distance_type == Validator.EUCLIDEAN then
         t = self:Euclidean(index, i)
       end
+      assert(t >= 0)
       if m >= 1 then
+        assert(d >= 0)
         if t < d then
           m = i
           d = t
@@ -59,6 +63,7 @@ function Validator:Argmin(index, distance_type)
     end
   end
   assert(m >= 1 and m <= size and m ~= index)
+  assert(d >= 0)
   return m
 end
 

@@ -20,6 +20,8 @@ function DataSetTest.BucketTest()
   config.kSampleSize = 7
   config.kBatchSize = 3
   config.kNumBucket = 3
+  config.kMinSentenceSize = 0
+  config.kMaxSentenceSize = 100
   local vocab_builder = VocabularyBuilder(config)
 
   local word_vocab_file = paths.concat(config.kDataPath, "books.wrd.voc")
@@ -55,6 +57,8 @@ function DataSetTest.BatchTest()
   config.kSampleSize = 7
   config.kBatchSize = 3
   config.kNumBucket = 1
+  config.kMinSentenceSize = 0
+  config.kMaxSentenceSize = 100
   local vocab_builder = VocabularyBuilder(config)
 
   local word_vocab_file = paths.concat(config.kDataPath, "books.wrd.voc")
@@ -168,6 +172,8 @@ function DataSetTest.Test()
   config.kNumBucket = 1
   config.kSampleSize = 5
   config.kBatchSize = 1
+  config.kMinSentenceSize = 0
+  config.kMaxSentenceSize = 100
   local vocab_builder = VocabularyBuilder(config)
 
   local word_vocab_file = paths.concat(config.kDataPath, "books.wrd.voc")

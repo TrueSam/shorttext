@@ -29,6 +29,7 @@ function BatchSamplerTest.Test()
   local word_file = paths.concat(config.kDataPath, "books.wrd")
   local dataset = DataSet(config, word_file, word_vocab)
   local sampler = BatchSampler(config, dataset.tokens_, dataset.starts_, dataset.lengths_);
+  assert(sampler.indices_:size(1) == sampler.lengths_:size(1) - 2)
 
   local past_current = {}
   for s = 1, 100 do

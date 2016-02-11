@@ -16,6 +16,7 @@ require("BucketBatchSampler")
 require("Utils")
 require("ManualDataSet")
 require("VocabularyBuilder")
+require("VocabularyUtils")
 
 torch.setdefaulttensortype('torch.FloatTensor')
 
@@ -33,6 +34,8 @@ local vocab_builder = VocabularyBuilder(config)
 
 local word_vocab_file = paths.concat(config.kDataPath, "books.wrd.voc")
 local word_file = paths.concat(config.kDataPath, "books.wrd")
+-- local word_vocab_file = paths.concat(config.kDataPath, "test.wrd.voc")
+-- local word_file = paths.concat(config.kDataPath, "test.wrd")
 
 print('Load vocabulary from ' .. word_vocab_file)
 local word_vocab = vocab_builder:BuildWordVocabulary(word_vocab_file)
@@ -41,17 +44,18 @@ print('Loaded ' .. word_vocab:size() .. ' tokens')
 print('Load books dataset.')
 local train_dataset = DataSet(config, word_file, word_vocab)
 print('Create sampler from dataset.')
-local sampler = BucketBatchSampler(config, train_dataset.tokens_, train_dataset.starts_, train_dataset.lengths_);
+local sampler = BatchSampler(config, train_dataset.tokens_, train_dataset.starts_, train_dataset.lengths_);
 
 print('Load rt polarity dataset.')
 local rt_dataset = PolarityDataSet(config, word_vocab)
 local rt_validator = Validator(config, rt_dataset.tokens_, rt_dataset.starts_, rt_dataset.lengths_)
+
 print('Load manual dataset.')
 local manual_dataset = ManualDataSet(config, word_vocab)
 local manual_validator = Validator(config, manual_dataset.tokens_, manual_dataset.starts_, manual_dataset.lengths_)
 
 -- Epochs
-local E = 1
+local E = 5
 
 print('Initialize model')
 local model = Model(config, word_vocab)
@@ -66,11 +70,19 @@ for e = 1, E do
   assert(size > 0)
 
   -- validation after very M samples
-  local M = 5000
+  local M = 1000
   for i = 1, size do
     local sentences, targets = sampler:SampleBatch()
     assert(sentences ~= nil)
     assert(targets ~= nil)
+
+    assert(#sentences == 3)
+    assert(#targets == 2)
+
+    -- VocabularyUtils.PrintBatchSentences(word_vocab, sentences)
+    -- print('+++++++++++++++++++++++++++++++++++++++++++++++++')
+    -- VocabularyUtils.PrintBatchSentences(word_vocab, targets)
+
     local loss = model:train(sentences, targets)
     assert(loss ~= nil)
 
@@ -101,8 +113,10 @@ for e = 1, E do
     end
 
     if i % 10 == 0 then
-      print("Epoch " .. e .. " trained " .. i .. " examples, " .. 'current loss: ' .. loss)
       collectgarbage()
+    end
+    if i % 100 == 0 then
+      print("Epoch " .. e .. " trained " .. i .. " examples, " .. 'current loss: ' .. loss)
     end
   end
 end

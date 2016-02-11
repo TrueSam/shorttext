@@ -20,6 +20,14 @@ function VocabularyBuilderTest.Test()
     local vocab_builder = VocabularyBuilder(config)
     local word_vocab = vocab_builder:BuildWordVocabulary(word_vocab_file)
     print('Loaded ' .. word_vocab:size() .. ' tokens ' .. 'at frequency ' .. config.kMinWordFreq)
+    assert(word_vocab:word_text(VocabularyUtils.kEndSentenceWordId) ==
+    VocabularyUtils.kEndSentenceWordText)
+    assert(word_vocab:word_id(VocabularyUtils.kEndSentenceWordText) ==
+    VocabularyUtils.kEndSentenceWordId)
+    assert(word_vocab:word_text(VocabularyUtils.kUnknownWordId) ==
+    VocabularyUtils.kUnknownWordText)
+    assert(word_vocab:word_id(VocabularyUtils.kUnknownWordText) ==
+    VocabularyUtils.kUnknownWordId)
   end
 end
 

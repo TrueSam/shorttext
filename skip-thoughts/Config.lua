@@ -6,13 +6,14 @@ local Config = torch.class("Config")
 
 function Config:__init()
   -- The mini frequency for the text to keep in vocabulary
-  self.kMinWordFreq = 100
+  self.kMinWordFreq = 80
 
   -- The size for the minibatch of sentences.
   -- Set batch size to bigger number if not using GPU.
-  self.kBatchSize = 30
+  self.kBatchSize = 20
   self.kSentenceSize = -1
   self.kMaxSentenceSize = 100
+  self.kMinSentenceSize = 5
   self.kNumBucket = 20
 
   -- The sample size for the dataset, -1 means using all the data.
@@ -21,10 +22,11 @@ function Config:__init()
   -- for validation
   self.kRTSampleSize = 500
 
-  self.kWordDim = 50
-  self.kHiddenDim = 50
+  self.kWordDim = 300
+  self.kHiddenDim = 300
 
-  self.kPretrainedFile = "vectors-1billion-50.t7"
+  -- self.kPretrainedFile = "vectors-1billion-50.t7"
+  self.kPretrainedFile = "google-300dim.t7"
   -- self.kPretrainedFile = "glove.6B.50d.t7"
 
   -- Learning rate
@@ -34,5 +36,5 @@ function Config:__init()
 
   self.kDataPath = "data"
 
-  self.useGPU = true
+  self.useGPU = false
 end

@@ -10,7 +10,7 @@ function BatchSampler:__init(config, tokens, starts, lengths)
   self.tokens_ = tokens
   self.starts_ = starts
   self.config_ = config
-  -- The starts always from the first sentence.
+  -- The starts always from the first sentence, so we minus 2 here.
   local max_index = lengths:size(1) - 2
   assert(max_index > 0)
   self.indices_ = torch.randperm(max_index)

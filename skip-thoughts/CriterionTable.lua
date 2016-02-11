@@ -31,7 +31,7 @@ function CriterionTable:updateGradInput(input, target)
       table.insert(clone, self.criterion.gradInput[k]:clone())
     end
     table.insert(self.gradInput, clone)
+    collectgarbage()
   end
-  collectgarbage()
   return self.gradInput
-end 
+end

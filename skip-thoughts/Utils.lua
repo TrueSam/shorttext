@@ -91,6 +91,8 @@ function Utils.ChunkSentence(parts, chunk)
 end
 
 function Utils.CountTokensAndLines(config, in_file)
+  assert(config.kMaxSentenceSize >= config.kMinSentenceSize)
+  assert(config.kMinSentenceSize >= 0)
   local size = config.kSampleSize
   local chunk = config.kSentenceSize
   assert(type(in_file) == "string")
@@ -105,7 +107,7 @@ function Utils.CountTokensAndLines(config, in_file)
     end
     local parts = Utils.split(line)
     assert(#parts > 0)
-    if #parts <= config.kMaxSentenceSize then
+    if #parts <= config.kMaxSentenceSize and #parts >= config.kMinSentenceSize then
       local tokens = Utils.ChunkSentence(parts, chunk)
       assert(tokens > 0)
       num_tokens = num_tokens + tokens
