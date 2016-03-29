@@ -1,5 +1,6 @@
 require("torch")
 require("nn")
+require("pl")
 require("Config")
 require("Encoder")
 require("Decoder")
@@ -147,24 +148,19 @@ function Model:_LoadPretrainedEmbeddings(pretrained_filename, word_vocab, word_e
   local std = word2vec.embeddings:std(2):expand(word2vec.embeddings:size())
   word2vec.embeddings = word2vec.embeddings - mean
   word2vec.embeddings:cdiv(std)
-  local loaded_embeddings = 0.0
-  for i, word in pairs(word_vocab.id2word_) do
-    if i ~= VocabularyUtils.kUnknownWordId and i ~= VocabularyUtils.kEndSentenceWordId then
-      local id = word2vec.idMap[word]
-      if id then
-        assert(word_embedding.weight[i]:nElement() == word2vec.embeddings[id]:nElement())
-        word_embedding.weight[i]:copy(word2vec.embeddings[id])
-        loaded_embeddings = loaded_embeddings + 1
-      else
-        id = word2vec.idMap[word:lower()]
-        if id then
-          assert(word_embedding.weight[i]:nElement() == word2vec.embeddings[id]:nElement())
-          word_embedding.weight[i]:copy(word2vec.embeddings[id])
-          loaded_embeddings = loaded_embeddings + 1
-        end
-      end
+  local updated = {}
+  for word, id in pairs(word2vec.idMap) do
+    local i = word_vocab:word_id(word)
+    if i == VocabularyUtils.kUnknownWordId then
+      i = word_vocab:word_id(word:lower())
+    end
+    if i ~= VocabularyUtils.kUnknownWordId then
+      assert(word_embedding.weight[i]:nElement() == word2vec.embeddings[id]:nElement())
+      table.insert(updated, i)
+      word_embedding.weight[i]:copy(word2vec.embeddings[id])
     end
   end
+  local loaded_embeddings = Set.len(Set(updated))
   assert(loaded_embeddings > 0)
   print(loaded_embeddings .. " embeddings loaded.")
   print("Embedding coverage: " .. (loaded_embeddings / word_vocab:size()))

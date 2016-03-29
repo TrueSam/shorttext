@@ -22,19 +22,19 @@ function Config:__init()
   -- for validation
   self.kRTSampleSize = 500
 
-  self.kWordDim = 300
-  self.kHiddenDim = 300
+  self.kWordDim = 50
+  self.kSentenceFeatureDim = 75
+  self.kDocumentFeatureDim = 75
+  self.kWindowSize = 3
 
-  -- self.kPretrainedFile = "vectors-1billion-50.t7"
-  self.kPretrainedFile = "google-300dim.t7"
-  -- self.kPretrainedFile = "glove.6B.50d.t7"
+  self.kPretrainedFile = "vectors-1billion-50.t7"
 
   -- Learning rate
   self.kLearningRate = 0.05
   self.kMinLearningRate = 0.001
   self.kLearningRateDecay = 0.0001
 
-  self.kDataPath = "data"
+  self.kDataPath = "../skip-thoughts/data"
 
   self.useGPU = false
 end
