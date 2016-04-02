@@ -1,5 +1,7 @@
 require("torch")
 require("Config")
+require('pl.utils')
+require('pl.stringx')
 
 local Utils = torch.class("Utils")
 
@@ -70,14 +72,69 @@ function Utils.ReadLines(in_file)
   return lines
 end
 
+function Utils.GetTokens(line)
+  local parts = line:split('\t')
+  assert(#parts > 0)
+  local tokens = Utils.split(parts[1])
+  return tokens
+end
+
 function Utils.CountTokens(lines)
   local num_tokens = 0
   for _, line in ipairs(lines) do
-    local parts = Utils.split(line)
-    assert(#parts > 0)
-    num_tokens = num_tokens + #parts
+    local tokens = Utils.GetTokens(line)
+    num_tokens = num_tokens + #tokens
   end
   return num_tokens
+end
+
+function Utils.GetTokensFromTrainingLine(line)
+  return Utils.GetTokens(line)
+end
+
+function Utils.IsNaN(v)
+  assert(type(v) == 'number')
+  return v ~= v
+end
+
+function Utils.ReadTrainingLines(config, filename)
+  local lines = utils.readlines(filename)
+  local training = {}
+  for i = 1, #lines do
+    local line = lines[i]
+    local tokens = Utils.GetTokensFromTrainingLine(line)
+    if #tokens >= config.kWindowSize then
+      table.insert(training, lines[i])
+    end
+  end
+  return training
+end
+
+function Utils.GetRougeFScore(rouge)
+  local parts = rouge:split(' ')
+  assert(#parts == 4)
+  local fields = parts[4]:split(':')
+  assert(#fields == 2)
+  return tonumber(fields[2])
+end
+
+function Utils.GetRougeScores(line)
+  local parts = line:split('\t')
+  assert(#parts == 4)
+  local rouge1 = parts[3]
+  local rouge2 = parts[4]
+  local rouge1_f = Utils.GetRougeFScore(rouge1)
+  local rouge2_f = Utils.GetRougeFScore(rouge2)
+  return rouge1_f, rouge2_f
+end
+
+function Utils.GetPositionScore(line)
+  local parts = line:split('\t')
+  assert(#parts == 4)
+  local pos = parts[2]
+  local fields = pos:split(' ')
+  assert(#fields == 2)
+  return tonumber(fields[2])
 end
 
 function Utils.ChunkSentence(parts, chunk)
@@ -105,15 +162,9 @@ function Utils.CountTokensAndLines(config, in_file)
     if size >= 0 and i > size then
       break
     end
-    local parts = Utils.split(line)
-    assert(#parts > 0)
-    if #parts <= config.kMaxSentenceSize and #parts >= config.kMinSentenceSize then
-      local tokens = Utils.ChunkSentence(parts, chunk)
-      assert(tokens > 0)
-      num_tokens = num_tokens + tokens
-      num_lines = num_lines + 1
-      i = i + 1
-    end
+    num_tokens = num_tokens + #Utils.GetTokens(line)
+    num_lines = num_lines + 1
+    i = i + 1
   end
   return num_tokens, num_lines
 end

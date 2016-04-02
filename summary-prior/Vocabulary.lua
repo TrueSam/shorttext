@@ -46,14 +46,22 @@ function Vocabulary:word_id(text)
   return id
 end
 
-function Vocabulary:text_frequency(text)
-  return self:id_frequency(word_id(text))
+function Vocabulary:text_count(text)
+  return self:id_count(self:word_id(text))
 end
 
-function Vocabulary:id_frequency(id)
+function Vocabulary:id_count(id)
   local freq = self.id2freq_[id]
   assert(freq ~= nil)
-  return freq
+  return freq.count
 end
 
+function Vocabulary:text_category_count(text)
+  return self:id_category_count(self:word_id(text))
+end
 
+function Vocabulary:id_category_count(id)
+  local freq = self.id2freq_[id]
+  assert(freq ~= nil)
+  return freq.category_count
+end

@@ -13,8 +13,8 @@ local VocabularyBuilderTest = {}
 
 function VocabularyBuilderTest.Test()
   local config = Config()
-  local word_vocab_file = paths.concat(config.kDataPath, "books.wrd.voc")
-  local freqs = {3, 5, 10, 20, 50, 100}
+  local word_vocab_file = paths.concat(config.kTrainingDataPath, "vocabulary.txt")
+  local freqs = {3, 5, 10}
   for _, f in ipairs(freqs) do
     config.kMinWordFreq = f
     local vocab_builder = VocabularyBuilder(config)
@@ -28,6 +28,11 @@ function VocabularyBuilderTest.Test()
     VocabularyUtils.kUnknownWordText)
     assert(word_vocab:word_id(VocabularyUtils.kUnknownWordText) ==
     VocabularyUtils.kUnknownWordId)
+    local text = 'the'
+    local id = word_vocab:word_id(text)
+    local expected = word_vocab:word_text(id)
+    print(expected, id)
+    assert(expected == text)
   end
 end
 

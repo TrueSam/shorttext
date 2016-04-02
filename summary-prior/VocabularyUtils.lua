@@ -1,5 +1,9 @@
 require("torch")
+require("os")
 require("Utils")
+require("WordStat")
+require('pl.utils')
+require('pl.stringx')
 
 local VocabularyUtils = torch.class("VocabularyUtils")
 
@@ -9,7 +13,7 @@ local function _SortedKeys(count)
     local t = {k, v}
     table.insert(items, t)
   end
-  table.sort(items, function(x, y) return x[2] > y[2] end)
+  table.sort(items, function(x, y) return x[2].count > y[2].count end)
   local keys = {}
   for i = 1, #items do
     table.insert(keys, items[i][1])
@@ -21,7 +25,7 @@ local function _FilterVocabulary(count, threshold)
   assert(threshold >= 0)
   local tmp = {}
   for k, v in pairs(count) do
-    if v >= threshold then
+    if v.count >= threshold then
       tmp[k] = v
     end
   end
@@ -32,15 +36,18 @@ local function _LoadCounts(in_file, lowercase)
   assert(in_file ~= nil and in_file:len() > 0)
   local count = {}
   for line in io.lines(in_file) do
-    local parts = Utils.split(line)
-    assert(#parts == 2, line)
-    local n = tonumber(parts[2])
+    local parts = line:split('\t')
+    assert(#parts >= 3, line)
+    local i = tonumber(parts[1])
+    local s = parts[2]
+    local n = tonumber(parts[3])
     assert(n ~= nil)
-    local s = parts[1]
-    if lowercase == true then
-      s = string.lower(s)
-    end
-    count[s] = n
+    assert(i ~= nil)
+    assert(s ~= nil)
+    local w = WordStat()
+    w.count = n
+    w.category_count = #parts - 3
+    count[s] = w
   end
   return count
 end
@@ -51,12 +58,18 @@ local function _InitWordCount()
   local count_freq = {}
 
   scored_count[VocabularyUtils.kEndSentenceWordText] = VocabularyUtils.kEndSentenceWordId
-  id = VocabularyUtils.kEndSentenceWordId+ 1
-  count_freq[VocabularyUtils.kEndSentenceWordId] = 1.0
+  id = VocabularyUtils.kEndSentenceWordId + 1
+  local w = WordStat()
+  w.count = 0.0
+  w.category_count = 0
+  count_freq[VocabularyUtils.kEndSentenceWordId] = w
 
   scored_count[VocabularyUtils.kUnknownWordText] = VocabularyUtils.kUnknownWordId
   id = VocabularyUtils.kUnknownWordId + 1
-  count_freq[VocabularyUtils.kUnknownWordId] = 1.0
+  w = WordStat()
+  w.count = 0.0
+  w.category_count = 0
+  count_freq[VocabularyUtils.kUnknownWordId] = w
 
   return scored_count, count_freq, id
 end
@@ -72,13 +85,6 @@ local function _ScoreCount(unscored_count, scored_count, count_freq, next_id)
   end
   for i = 1, next_id - 1 do
     assert(count_freq[i] ~= nil)
-  end
-  local sum = 0.0
-  for k, v in pairs(count_freq) do
-    sum = sum + v
-  end
-  for k, v in pairs(count_freq) do
-    count_freq[k] = v / sum
   end
   return scored_count, count_freq
 end
