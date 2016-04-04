@@ -1,10 +1,14 @@
 require('torch')
 require('nn')
 require('optim')
+require('Validator')
 
 local Model = torch.class('Model')
 
 function Model:__init(config, word_vocab)
+  assert(config ~= nil)
+  assert(word_vocab ~= nil)
+
   self.lookup_ = nn.LookupTable(word_vocab:size(), config.kWordDim)
   local filename = paths.concat(config.kDataPath, config.kPretrainedFile)
   self:_LoadPretrainedEmbeddings(filename, word_vocab, self.lookup_)
@@ -104,8 +108,17 @@ function Model:train(sampler, epochs)
         print('loss is NaN.  This usually indicates a bug.')
         break -- halt
       end
-      -- print(fs)
+
       current_loss = current_loss + fs[1]
+
+      if i % 100 == 0 then
+        collectgarbage()
+      end
+    end
+
+    if e % 100 == 0 then
+      -- Limit the summary to 10 words.
+      Validator.Validate(self, 10, e)
     end
 
     current_loss = current_loss / size

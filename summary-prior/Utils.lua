@@ -73,23 +73,28 @@ function Utils.ReadLines(in_file)
 end
 
 function Utils.GetTokens(line)
-  local parts = line:split('\t')
-  assert(#parts > 0)
-  local tokens = Utils.split(parts[1])
-  return tokens
+  error('Error')
 end
 
-function Utils.CountTokens(lines)
+function Utils.CountTokensFromTrainingLines(lines)
   local num_tokens = 0
   for _, line in ipairs(lines) do
-    local tokens = Utils.GetTokens(line)
+    local tokens = Utils.GetTokensFromTrainingLine(line)
     num_tokens = num_tokens + #tokens
   end
   return num_tokens
 end
 
 function Utils.GetTokensFromTrainingLine(line)
-  return Utils.GetTokens(line)
+  local parts = line:split('\t')
+  assert(#parts > 0)
+  local tokens = Utils.split(parts[1])
+  return tokens
+end
+
+function Utils.GetTokensFromTestingLine(line)
+  local tokens = Utils.split(line)
+  return tokens
 end
 
 function Utils.IsNaN(v)
@@ -103,6 +108,19 @@ function Utils.ReadTrainingLines(config, filename)
   for i = 1, #lines do
     local line = lines[i]
     local tokens = Utils.GetTokensFromTrainingLine(line)
+    if #tokens >= config.kWindowSize then
+      table.insert(training, lines[i])
+    end
+  end
+  return training
+end
+
+function Utils.ReadTestingLines(config, filename)
+  local lines = utils.readlines(filename)
+  local training = {}
+  for i = 1, #lines do
+    local line = lines[i]
+    local tokens = Utils.GetTokensFromTestingLine(line)
     if #tokens >= config.kWindowSize then
       table.insert(training, lines[i])
     end
@@ -162,7 +180,7 @@ function Utils.CountTokensAndLines(config, in_file)
     if size >= 0 and i > size then
       break
     end
-    num_tokens = num_tokens + #Utils.GetTokens(line)
+    num_tokens = num_tokens + #Utils.GetTokensFromTrainingLine(line)
     num_lines = num_lines + 1
     i = i + 1
   end

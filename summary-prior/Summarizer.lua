@@ -31,12 +31,7 @@ function Summarizer:GenerateSummary(sentences)
 end
 
 function Summarizer:GenerateSummaryFromFile(filename)
-  local document = file.read(filename)
-  return self:GenerateSummaryText(document)
-end
-
-function Summarizer:GenerateSummaryText(document)
-  local lines = stringx.splitlines(document, false)
+  local lines = Utils.ReadTestingLines(self.model_.config_, filename)
   local summary = self:GenerateSummary(lines)
   local summary_lines = {}
   for i = 1, #summary do

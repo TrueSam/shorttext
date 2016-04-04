@@ -4,6 +4,7 @@ import glob
 import xml.dom.minidom
 import StringIO
 import xml.etree.ElementTree
+import duc_data
 
 DUC_DOCS_PATH = ''
 OUTPUT_PATH = ''
@@ -63,10 +64,11 @@ def main(unused_argv):
     summary_files = aligned_files[k]
 
     ps = []
-    try:
-      ps = get_doc_content_as_paragraphs(doc_file)
-    except:
-      continue
+    ps = duc_data.get_paragraph_from_training_doc_regexp(doc_file)
+#     try:
+#       ps = get_doc_content_as_paragraphs(doc_file)
+#     except:
+#       continue
     b = os.path.basename(doc_file)
     paragraphs_files = []
     for i in xrange(len(ps)):

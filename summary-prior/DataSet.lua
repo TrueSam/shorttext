@@ -11,7 +11,7 @@ function DataSet:__init(config, sentence_file, word_vocab)
     assert(config.kSampleSize >= config.kBatchSize)
   end
   local lines = Utils.ReadTrainingLines(config, sentence_file)
-  local num_tokens = Utils.CountTokens(lines)
+  local num_tokens = Utils.CountTokensFromTrainingLines(lines)
   local num_lines = #lines
   assert(num_tokens > 0)
   assert(num_lines > 0)

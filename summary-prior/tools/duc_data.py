@@ -27,6 +27,9 @@ def get_category_from_training_doc_regexp(filename):
     return ''
 
 def get_text_from_training_doc_regexp(filename):
+  return '\n\t'.join(get_paragraph_from_training_doc_regexp(filename))
+
+def get_paragraph_from_training_doc_regexp(filename):
   pattern = r'<TEXT>(.*?)</TEXT>'
   groups = re.findall(pattern, open(filename).read(), re.S)
   assert len(groups) == 1
@@ -36,9 +39,9 @@ def get_text_from_training_doc_regexp(filename):
   if len(groups) == 0:
     paragraphs = text.split('\t')
     paragraphs = [' '.join(p.split()) for p in paragraphs]
-    return '\n\t'.join(paragraphs)
+    return paragraphs
   else:
-    return '\n\t'.join(groups)
+    return groups
 
 def get_sentence_from_training_doc_regexp(filename):
   document = get_text_from_training_doc_regexp(filename)

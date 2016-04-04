@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from nltk.tokenize import RegexpTokenizer
+from nltk.tokenize import TweetTokenizer
 import nltk.data
 import StringIO
 import glob
