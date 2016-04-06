@@ -34,8 +34,7 @@ function Config:__init()
   self.kMinLearningRate = 0.001
   self.kLearningRateDecay = 0.0001
 
-  self.kDataPath = "../skip-thoughts/data"
-  self.kTrainingDataPath = "data"
+  self.kDataPath = "data"
 
   self.useGPU = false
 end

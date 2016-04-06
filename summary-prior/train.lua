@@ -2,8 +2,8 @@ package.path = package.path .. ";./?.lua"
 
 require("torch")
 require("os")
-require("paths")
 require("sys")
+require('pl.path')
 
 require("Config")
 require("DataSet")
@@ -29,8 +29,8 @@ print("use CUDA : " .. tostring(config.useGPU))
 
 local vocab_builder = VocabularyBuilder(config)
 
-local word_vocab_file = paths.concat(config.kTrainingDataPath, "vocabulary.txt")
-local word_file = paths.concat(config.kTrainingDataPath, "sentences.txt")
+local word_vocab_file = path.join(config.kDataPath, "build/vocabulary.txt")
+local word_file = path.join(config.kDataPath, "build/sentences.txt")
 
 print('Load vocabulary from ' .. word_vocab_file)
 local word_vocab = vocab_builder:BuildWordVocabulary(word_vocab_file)
@@ -42,7 +42,7 @@ print('Create sampler from dataset.')
 local sampler = BatchSampler(config, train_dataset);
 
 -- Epochs
-local E = 10000
+local E = 1000
 
 print('Initialize model')
 local model = Model(config, word_vocab)
@@ -56,6 +56,6 @@ model:train(sampler, E)
 
 print(string.format("Train completed after %f seconds.", sys.clock() - start))
 
-local filename = paths.concat(string.format("model-%d.t7", E))
+local filename = path.join(config.kDataPath, 'build', string.format("model-%d.t7", E))
 print('Saving to file: ' .. filename)
 torch.save(filename, model)

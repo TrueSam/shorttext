@@ -148,7 +148,7 @@ end
 
 function Utils.GetPositionScore(line)
   local parts = line:split('\t')
-  assert(#parts == 4)
+  assert(#parts == 4, line)
   local pos = parts[2]
   local fields = pos:split(' ')
   assert(#fields == 2)

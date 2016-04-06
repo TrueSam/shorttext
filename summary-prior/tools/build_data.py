@@ -50,7 +50,8 @@ def get_paragraph_from_training_doc_regexp(filename):
     paragraphs = [' '.join(p.split()) for p in paragraphs]
     return paragraphs
   else:
-    return groups
+    paragraphs = [' '.join(g.split()) for g in groups]
+    return paragraphs
 
 def get_sentence_from_training_doc_regexp(filename):
   document = get_text_from_training_doc_regexp(filename)
@@ -70,7 +71,7 @@ def get_sentence_from_testing_doc(filename):
   dom = xml.dom.minidom.parse(filename)
   text = dom.getElementsByTagName('TEXT')
   assert len(text) == 1
-  document = text[0].childNodes[0].data
+  document = ' '.join(text[0].childNodes[0].data.split())
   sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
   sentences = sent_detector.tokenize(document)
   tknzr = TweetTokenizer()
