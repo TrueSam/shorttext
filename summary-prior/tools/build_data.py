@@ -329,6 +329,11 @@ def main(unused_argv):
   build_vocabuary(data_dir)
   build_training_data(data_dir)
   build_testing_data(data_dir)
+  validate_dir = os.path.join(data_dir, 'build/validate')
+  try:
+    os.mkdir(validate_dir)
+  except OSError:
+    print 'Directory %s already exists' % validate_dir
 
 if __name__ == '__main__':
   main(sys.argv)

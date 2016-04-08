@@ -18,7 +18,7 @@ function Model:__init(config, word_vocab)
   self.model_:add(nn.JoinTable(2))
   self.model_:add(nn.Linear(config.kSentenceFeatureDim + config.kDocumentFeatureDim, 1))
 
-  self.model_:reset()
+  -- self.model_:reset()
 
   self.criterion_ = nn.MSECriterion()
 
@@ -35,11 +35,11 @@ function Model:createSentenceModel(config, word_vocab)
   for kW = 1, config.kWindowSize do
     local cnn = nn.Sequential()
     cnn:add(nn.TemporalConvolution(config.kWordDim, config.kSentenceFeatureDim, kW))
-    cnn:add(nn.Max(2))
+    cnn:add(nn.Max(2)):add(nn.Replicate(1, 2))
     c:add(cnn)
   end
   model:add(c)
-  model:add(nn.JoinTable(1, 2)):add(nn.Max(1, 2)):add(nn.Replicate(1))
+  model:add(nn.JoinTable(1, 2)):add(nn.Max(1, 2))
   return model
 end
 
@@ -79,9 +79,10 @@ function Model:train(sampler, epochs)
     dl_dx:zero()
 
     local inputs = {sentences, features}
+    local output = self.model_:forward(inputs)
     -- evaluate the loss function and its derivative wrt x, for that sample
-    local loss_x = self.criterion_:forward(self.model_:forward(inputs), targets)
-    self.model_:backward(inputs, self.criterion_:backward(self.model_.output, targets))
+    local loss_x = self.criterion_:forward(output, targets)
+    self.model_:backward(inputs, self.criterion_:backward(output, targets))
 
     -- clip gradient element-wise
     dl_dx:clamp(-5, 5)
@@ -98,7 +99,7 @@ function Model:train(sampler, epochs)
 
   for e = 1, epochs do
     collectgarbage()
-    local size = sampler:size()
+    local size = sampler:size() / self.config_.kBatchSize
     assert(size > 0)
     local current_loss = 0
     for i = 1, size do

@@ -10,7 +10,7 @@ function Config:__init()
 
   -- The size for the minibatch of sentences.
   -- Set batch size to bigger number if not using GPU.
-  self.kBatchSize = 1
+  self.kBatchSize = 100
   self.kSentenceSize = -1
   self.kMaxSentenceSize = 100
   self.kMinSentenceSize = 5
@@ -30,7 +30,7 @@ function Config:__init()
   self.kPretrainedFile = "vectors-1billion-50.t7"
 
   -- Learning rate
-  self.kLearningRate = 0.05
+  self.kLearningRate = 1.00
   self.kMinLearningRate = 0.001
   self.kLearningRateDecay = 0.0001
 

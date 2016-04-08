@@ -4,7 +4,7 @@ require("torch")
 require("nn")
 require("rnn")
 require("os")
-require("BatchSampler")
+require("BucketBatchSampler")
 require("Config")
 require("DataSet")
 require("VocabularyBuilder")
@@ -12,15 +12,14 @@ require("VocabularyUtils")
 
 mytester = torch.Tester()
 
-local BatchSamplerTest = {}
+local BucketBatchSamplerTest = {}
 
-function BatchSamplerTest.Test()
+function BucketBatchSamplerTest.Test()
   local config = Config()
   config.useGPU = false
   config.kMinWordFreq = 1
   config.kSampleSize = 7
-  config.kBatchSize = 1
-  config.kNumBucket = 3
+  config.kBatchSize = 3
   local vocab_builder = VocabularyBuilder(config)
 
   local word_vocab_file = paths.concat(config.kDataPath, "build/vocabulary.txt")
@@ -28,17 +27,15 @@ function BatchSamplerTest.Test()
 
   local word_file = paths.concat(config.kDataPath, "build/sentences.txt")
   local dataset = DataSet(config, word_file, word_vocab)
-  local sampler = BatchSampler(config, dataset);
-  assert(sampler.indices_:size(1) == sampler.lengths_:size(1))
+  local sampler = BucketBatchSampler(config, dataset);
 
-  local past_current = {}
   for s = 1, 100 do
-    local batch, label = sampler:SampleBatch()
-    table.insert(past_current, sampler.current_)
+    local batch = sampler:SampleBatch()
+    print(batch)
   end
 end
 
-mytester:add(BatchSamplerTest)
+mytester:add(BucketBatchSamplerTest)
 
 mytester:run()
 

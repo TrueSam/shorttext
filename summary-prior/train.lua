@@ -42,7 +42,7 @@ print('Create sampler from dataset.')
 local sampler = BatchSampler(config, train_dataset);
 
 -- Epochs
-local E = 1000
+local E = 2000
 
 print('Initialize model')
 local model = Model(config, word_vocab)

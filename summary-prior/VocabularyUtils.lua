@@ -71,6 +71,14 @@ local function _InitWordCount()
   w.category_count = 0
   count_freq[VocabularyUtils.kUnknownWordId] = w
 
+  scored_count[VocabularyUtils.kPadWordText] = VocabularyUtils.kPadWordId
+  id = VocabularyUtils.kPadWordId + 1
+  w = WordStat()
+  w.count = 0.0
+  w.category_count = 0
+
+  count_freq[VocabularyUtils.kPadWordId] = w
+
   return scored_count, count_freq, id
 end
 
@@ -95,6 +103,8 @@ VocabularyUtils.kEndSentenceWordText = "EOS"
 VocabularyUtils.kEndSentenceWordId = 1
 VocabularyUtils.kUnknownWordText = "UNK"
 VocabularyUtils.kUnknownWordId = 2
+VocabularyUtils.kPadWordText = "PAD"
+VocabularyUtils.kPadWordId = 3
 
 VocabularyUtils.ReadWordVocabulary = function(filename, min_frequency, lowercase)
   local count = _LoadCounts(filename, lowercase)
