@@ -18,8 +18,6 @@ function Model:__init(config, word_vocab)
   self.model_:add(nn.JoinTable(2))
   self.model_:add(nn.Linear(config.kSentenceFeatureDim + config.kDocumentFeatureDim, 1))
 
-  -- self.model_:reset()
-
   self.criterion_ = nn.MSECriterion()
 
   self.word_vocab_ = word_vocab
