@@ -3,18 +3,26 @@ require('pl')
 
 local RougeSettings = torch.class('RougeSettings')
 
-function RougeSettings.OutputSettingsXML(peer_files, model_dir, xml_file)
-  local model_files = dir.getallfiles(model_dir)
+function RougeSettings.OutputSettingsXML(peer_files, model_files, xml_file)
   local align = RougeSettings._AlignPeerAndModelFiles(peer_files, model_files)
   RougeSettings._GenerateXMLSettings(align, xml_file)
 end
 
+function RougeSettings._GetDocFilename(summary_filename)
+  local b = path.basename(summary_filename)
+  local parts = stringx.split(b, '.')
+  assert(#parts >= 2)
+  return parts[#parts - 1] .. '.' .. parts[#parts]
+end
+
 function RougeSettings._AlignPeerAndModelFiles(peer_files, model_files)
+  assert(#peer_files > 0)
+  assert(#model_files > 0)
   local align = {}
   for i = 1, #peer_files do
     local matched = nil
     for j = 1, #model_files do
-      if stringx.endswith(path.basename(model_files[j]), path.basename(peer_files[i])) then
+      if RougeSettings._GetDocFilename(model_files[j]) == RougeSettings._GetDocFilename(peer_files[i]) then
         matched = model_files[j]
       end
     end
