@@ -11,7 +11,6 @@ function Validator.Validate(model, limit, epoch)
   assert(type(limit) == 'number')
   assert(type(epoch) == 'number')
   local summarizer = Summarizer(model, limit)
-  local model_dir = 'data/duc2004/eval/models/1'
   local test_files = posix.glob.glob('./data/duc2004/docs/*/*')
   local validation_files = {
     'APW19981001.0299',
@@ -45,7 +44,8 @@ function Validator.Validate(model, limit, epoch)
   end
 
   local xml_file = path.join(validate_dir, 'settings.xml')
-  local model_files = posix.glob.glob(model_dir + '/*/*')
+  local model_dir = 'data/duc2004/eval/models/1'
+  local model_files = posix.glob.glob(model_dir .. '/*')
   RougeSettings.OutputSettingsXML(peer_files, model_files, xml_file)
   local rouge_dir = 'rouge-1.5.5'
   local rouge_command = rouge_dir .. '/ROUGE-1.5.5.pl -e ' .. rouge_dir .. '/data -n 1 -n 2 -x -a -s ' .. xml_file
